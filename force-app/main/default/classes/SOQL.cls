@@ -76,8 +76,7 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetAccountCount method to cover this method
 	 */
 	public static Integer getAccountCount () {
-	//  The body of the method
-	return [SELECT count(Id) FROM Account];
+	return [SELECT count() FROM Account];
 	}
 
 	/**
@@ -87,9 +86,14 @@ public with sharing class SOQL {
 	 * @return A map of Task Ids to Task records.
 	 * Update the corresponding test class and testGetTasksDueNextWeek method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static Map<Id, Task> getTasksDueNextWeek () {
+	List<Task> taskList = [SELECT Id, Subject, Status, Priority, ActivityDate FROM TASK WHERE ActivityDate = NEXT_N_DAYS:7];
+	Map<Id, Task> taskIdToTaskMap = new Map<Id, Task> ();
+	for (Task taskItem : taskList) {
+		taskIdToTaskMap.put(Id, Task);
+	}
+	return taskIdToTaskMap;
+	}
 
 	/**
 	 * Question 7

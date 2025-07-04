@@ -39,7 +39,7 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetContactsByFirstName method to cover this method
 	 */
 	public static List<Contact> getContactsByFirstName () {
-	return [SELECT Id, FirstName, LastName, Name FROM Contact WHERE FirstName = 'John'];
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE FirstName = 'John'];
 	}
 
 	/**
@@ -49,9 +49,10 @@ public with sharing class SOQL {
 	 * @return A list of Contact Ids.
 	 * Update the corresponding test class and testGetContactIdsByLastName method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
+	public static List<Id> getContactIdsByLastName () {
 	//  The body of the method
-	//}
+	return [SELECT Id FROM Contact WHERE LastName IN ('Smith', 'Jones')];
+	}
 
 	/**
 	 * Question 4

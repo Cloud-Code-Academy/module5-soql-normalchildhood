@@ -27,11 +27,9 @@ public with sharing class SOQL {
 	 * @return List of all leads with Id, LastName, Company, Phone, Email
 	 * Update the corresponding test class and testGetAllLeads method to cover this method
 	 */
-	public static List<Lead> getAllLeads (input parameters) {
-	//  The body of the method
-	List<Lead> allLeads = [SELECT Id, LastName, Company, Phone, Email FROM Lead];
-	return allLeads;
-	}
+	public static List<Lead> getAllLeads() {
+        return [SELECT Id, LastName, Company, Phone, Email FROM Lead];
+    }
 
 	/**
 	 * Question 2
@@ -40,9 +38,9 @@ public with sharing class SOQL {
 	 * @return A list of Contact records.
 	 * Update the corresponding test class and testGetContactsByFirstName method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Contact> getContactsByFirstName () {
+	return [SELECT Id, FirstName, LastName, Name FROM Contact WHERE FirstName = 'John'];
+	}
 
 	/**
 	 * Question 3

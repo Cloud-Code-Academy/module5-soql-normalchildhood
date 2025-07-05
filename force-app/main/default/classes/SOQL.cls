@@ -49,9 +49,8 @@ public with sharing class SOQL {
 	 * @return A list of Contact Ids.
 	 * Update the corresponding test class and testGetContactIdsByLastName method to cover this method
 	 */
-	public static List<Id> getContactIdsByLastName () {
-	//  The body of the method
-	return [SELECT Id FROM Contact WHERE LastName IN ('Smith', 'Jones')];
+	public static List<Contact> getContactIdsByLastName () {
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE LastName IN ('Smith', 'Jones')];
 	}
 
 	/**
@@ -88,11 +87,7 @@ public with sharing class SOQL {
 	 */
 	public static Map<Id, Task> getTasksDueNextWeek () {
 	List<Task> taskList = [SELECT Id, Subject, Status, Priority, ActivityDate FROM TASK WHERE ActivityDate = NEXT_N_DAYS:7];
-	Map<Id, Task> taskIdToTaskMap = new Map<Id, Task> ();
-	for (Task taskItem : taskList) {
-		taskIdToTaskMap.put(Id, Task);
-	}
-	return taskIdToTaskMap;
+	return new Map<Id, Task> (taskList);
 	}
 
 	/**
@@ -102,9 +97,9 @@ public with sharing class SOQL {
 	 * @return A list of Contact records.
 	 * Update the corresponding test class and testGetContactsByEmailDomain method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Contact> getContactsByEmailDomain (input parameters) {
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE Email LIKE '@example.com'];
+	}
 
 	/**
 	 * Question 8

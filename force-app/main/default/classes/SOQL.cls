@@ -191,7 +191,11 @@ public with sharing class SOQL {
 	 * @return A list of Contacts
 	 */
 	public static List<Contact> getBirthdateContacts() {
-		return null; // Replace null with the variable you used to store the result
+		return [SELECT Id, FirstName, LastName, Birthdate FROM Contact WHERE Birthdate <= TODAY ORDER BY Birthdate DESC LIMIT 3]; 
+		// I'm reading the directions as if it's referring to the actual birthdate and not just the birthday. So, in my mind, 
+		//someone whose birthdate is 7/1/2025 would be listed before (since it's descending) someone whose birthdate is 7/4/2024
+		//relative to today's date (7/5/2025). Unsure if this is the correct way to understand the directions or if just birthday
+		//was intended.
 	}
 
 	/**

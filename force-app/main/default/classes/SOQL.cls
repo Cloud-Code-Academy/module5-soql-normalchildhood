@@ -98,7 +98,7 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetContactsByEmailDomain method to cover this method
 	 */
 	public static List<Contact> getContactsByEmailDomain () {
-	return [SELECT Id, FirstName, LastName FROM Contact WHERE Email LIKE '%@example.com'];
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE Email LIKE '%@example.com%'];
 	}
 
 	/**
@@ -109,7 +109,8 @@ public with sharing class SOQL {
 	 * @return A list of Opportunity records.
 	 */
 	public static List<Opportunity> getOpportunitiesByNameKeyword(String keyword) {
-		return null; // Replace null with the variable you used to store the result
+		String searchWord = '%' + keyword + '%';
+		return [SELECT Id, Name FROM Opportunity WHERE Name LIKE :searchWord];
 	}
 
 	/**

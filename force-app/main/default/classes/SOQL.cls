@@ -16,7 +16,7 @@
  * Users of this class can expect to gain a solid understanding of SOQL in Apex and
  * be prepared to handle data retrieval tasks in Salesforce development.
  *
- * @author Your Name
+ * @author Mychal Tepker
  */
 
 public with sharing class SOQL {
@@ -27,9 +27,9 @@ public with sharing class SOQL {
 	 * @return List of all leads with Id, LastName, Company, Phone, Email
 	 * Update the corresponding test class and testGetAllLeads method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Lead> getAllLeads() {
+        return [SELECT Id, LastName, Company, Phone, Email FROM Lead];
+    }
 
 	/**
 	 * Question 2
@@ -38,9 +38,9 @@ public with sharing class SOQL {
 	 * @return A list of Contact records.
 	 * Update the corresponding test class and testGetContactsByFirstName method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Contact> getContactsByFirstName () {
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE FirstName = 'John'];
+	}
 
 	/**
 	 * Question 3
@@ -49,9 +49,9 @@ public with sharing class SOQL {
 	 * @return A list of Contact Ids.
 	 * Update the corresponding test class and testGetContactIdsByLastName method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Contact> getContactIdsByLastName () {
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE LastName IN ('Smith', 'Jones')];
+	}
 
 	/**
 	 * Question 4
@@ -62,9 +62,10 @@ public with sharing class SOQL {
 	 * @return A list of Opportunities with important opportunities fields
 	 * Update the corresponding test class and testGetClosedWonOpportunityCountByAccount method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
+	public static List<Opportunity> getClosedWonOpportunityCountByAccount (String accId) {
 	//  The body of the method
-	//}
+	return [SELECT Id, Account.Name, StageName, Name, Amount, CloseDate FROM Opportunity WHERE AccountId = :accId AND StageName = 'Closed Won'];
+	}
 
 	/**
 	 * Question 5
@@ -73,9 +74,9 @@ public with sharing class SOQL {
 	 * @return The Integer count of Account records.
 	 * Update the corresponding test class and testGetAccountCount method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static Integer getAccountCount () {
+	return [SELECT count() FROM Account];
+	}
 
 	/**
 	 * Question 6
@@ -84,9 +85,10 @@ public with sharing class SOQL {
 	 * @return A map of Task Ids to Task records.
 	 * Update the corresponding test class and testGetTasksDueNextWeek method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static Map<Id, Task> getTasksDueNextWeek () {
+	List<Task> taskList = [SELECT Id, Subject, Status, Priority, ActivityDate FROM TASK WHERE ActivityDate = NEXT_N_DAYS:7];
+	return new Map<Id, Task> (taskList);
+	}
 
 	/**
 	 * Question 7
@@ -95,9 +97,9 @@ public with sharing class SOQL {
 	 * @return A list of Contact records.
 	 * Update the corresponding test class and testGetContactsByEmailDomain method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Contact> getContactsByEmailDomain () {
+	return [SELECT Id, FirstName, LastName FROM Contact WHERE Email LIKE '%@example.com%'];
+	}
 
 	/**
 	 * Question 8
@@ -107,7 +109,8 @@ public with sharing class SOQL {
 	 * @return A list of Opportunity records.
 	 */
 	public static List<Opportunity> getOpportunitiesByNameKeyword(String keyword) {
-		return null; // Replace null with the variable you used to store the result
+		String searchWord = '%' + keyword + '%';
+		return [SELECT Id, Name FROM Opportunity WHERE Name LIKE :searchWord];
 	}
 
 	/**
@@ -116,7 +119,7 @@ public with sharing class SOQL {
 	 * @return A list of Case records.
 	 */
 	public static List<Case> getFilterCaseOrigins() {
-		return null; // Replace null with the variable you used to store the result
+		return [SELECT Id, Subject, Origin FROM Case WHERE Origin NOT IN ('Email', 'Web') AND Origin != null];
 	}
 
 	/**
@@ -129,9 +132,9 @@ public with sharing class SOQL {
 	 * @return A list of Lead records.
 	 * Update the corresponding test class and testGetLeadsBySourceOrTitle method to cover this method
 	 */
-	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Lead> getLeadsBySourceOrTitle (String leadSource, String keyword) {
+	return [SELECT Id, LeadSource, Title FROM Lead WHERE LeadSource = :leadSource OR Title = :keyword];
+	}
 
 	/**
 	 * Question 11
@@ -142,15 +145,14 @@ public with sharing class SOQL {
 	 */
 	public static List<String> getContactNamesByAccount(Id accountId) {
 		// Create a list to hold the Contact LastNames
-
+		List<String> lastNames = new List<String>();
+		List<Contact> contactQuery = [SELECT Id, LastName, AccountId FROM Contact WHERE AccountId = :accountId];
 		// Query the Contacts
 		// Loop through each Contact and add the LastName to the list
-		//for () {
-		//
-		//}
-
-		// Return the list of Contact LastNames
-		return null; // Replace null with the variable you used to store the result
+		for (Contact contact : contactQuery) {
+		lastNames.add(contact.LastName);
+		}
+		return lastNames; // Replace null with the variable you used to store the result
 	}
 
 	/**

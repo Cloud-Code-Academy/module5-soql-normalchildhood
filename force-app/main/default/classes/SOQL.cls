@@ -348,20 +348,27 @@ public with sharing class SOQL {
 	 */
 	public static void setPrimaryContact() {
 		//Use the getOpportunityDetailsForClosedWon() method to get the Opportunities
-		List<Opportunity> oppsList = [SELECT Id, AccountId FROM Opportunity WHERE StageName = 'Closed Won'];
+		List<Opportunity> oppsList = getOpportunityDetailsForClosedWon();
 		List<Account> acctsRelatedToOpps = new List<Account>();
 		// Create a set of Account Ids from the Opportunities
 		for (Opportunity opp : oppsList) {
 			acctsRelatedToOpps.add(opp.AccountId);
 		}
 		// Query the Contacts
-		List<Contact> relatedCont = [SELECT Id, AccountId FROM Contact WHERE AccountId IN acctsRelatedToOpps];
+		List<Contact> relatedCont = [SELECT Id, AccountId, FirstName FROM Contact WHERE AccountId IN :acctsRelatedToOpps ORDER BY FirstName ASC LIMIT 1];
 		// Loop through each Contact and add the Account Id and Contact to the map
-
+		Map<ID, ID> accountIdToContactName = new Map<ID, ID> ();
+		for (Contact contact : relatedCont) {
+			accountIdToContactName.put(contact.AccountId, contact.Id);
+		}
 		// Loop through each Opportunity
-
+		String contactId = null;
+		for (Opportunity oppUpdate : oppsList) {
+		contactId = accountIdToContactName.get(oppUpdate.AccountId);
+			oppUpdate.Primary_Contact__r = contactId;
+		}
 		// Update the Opportunity primary contact from accountToContactMap
-
+		update oppsList;
 		// Update the Opportunities
 	}
 }

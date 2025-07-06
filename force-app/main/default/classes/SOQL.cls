@@ -338,7 +338,7 @@ public with sharing class SOQL {
 	 * @return A list of filtered Opportunity
 	 */
 	public static List<Opportunity> getOpportunityDetailsForClosedWon() {
-		return null; // Replace null with the variable you used to store the result
+		return [SELECT Name, Account.Name, Owner.Name FROM Opportunity WHERE StageName = 'Closed Won']; // Replace null with the variable you used to store the result
 	}
 
 	/**
@@ -348,11 +348,14 @@ public with sharing class SOQL {
 	 */
 	public static void setPrimaryContact() {
 		//Use the getOpportunityDetailsForClosedWon() method to get the Opportunities
-
+		List<Opportunity> oppsList = [SELECT Id, AccountId FROM Opportunity WHERE StageName = 'Closed Won'];
+		List<Account> acctsRelatedToOpps = new List<Account>();
 		// Create a set of Account Ids from the Opportunities
-
+		for (Opportunity opp : oppsList) {
+			acctsRelatedToOpps.add(opp.AccountId);
+		}
 		// Query the Contacts
-
+		List<Contact> relatedCont = [SELECT Id, AccountId FROM Contact WHERE AccountId IN acctsRelatedToOpps];
 		// Loop through each Contact and add the Account Id and Contact to the map
 
 		// Loop through each Opportunity

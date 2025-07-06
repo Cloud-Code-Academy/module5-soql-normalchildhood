@@ -273,11 +273,12 @@ public with sharing class SOQL {
 	 */
 	public static List<Contact> getAccountsWithContactsByState(Id accountId) {
 		// Query the Account
-
+		Account acctQuery = [SELECT Id, Name, BillingState FROM Account WHERE Id = :accountId];
+		String acctBillingState = acctQuery.BillingState;
 		// Store the Account's BillingState
-
+		Contact contQuery = [SELECT Id, MailingState FROM Contact WHERE MailingState = :acctBillingState];
 		// Query the Contacts
-		return null; // Replace null with the variable you used to store the result
+		return contQuery; // Replace null with the variable you used to store the result
 	}
 
 	/**

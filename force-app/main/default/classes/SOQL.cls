@@ -204,7 +204,7 @@ public with sharing class SOQL {
 	 * @return A list of Cases
 	 */
 	public static List<Case> getCasesWithStatus() {
-		return [SELECT Id, Status, CreatedDate FROM Case WHERE Status = 'Open' ORDER BY CreatedDate LIMIT 10 OFFSET 5]; // Replace null with the variable you used to store the result
+		return [SELECT Id, Status, CreatedDate FROM Case WHERE IsClosed = false ORDER BY CreatedDate LIMIT 10 OFFSET 5]; // Replace null with the variable you used to store the result
 	}
 
 	/**
@@ -283,29 +283,31 @@ public with sharing class SOQL {
 
 	/**
 	 * Question 22
-	 * Extracts email domains from them leads, then finds Accounts with matching website domains
+	 * Extracts email domains from the leads, then finds Accounts with matching website domains
 	 * If Lead Email = test@test.com return account with website = www.test.com
 	 * Example: findAccountsByLeadEmailDomains([set of lead ids]) should return a list of Accounts with matching email domains
 	 * @param A set of Lead Ids.
 	 * @return A list of Accounts with matching email domains.
 	 */
 	public static List<Account> findAccountsByLeadEmailDomains(Set<Id> leadIds) {
-		// Query the Leads
+		List<Lead> leads = [SELECT Email FROM Lead WHERE Id IN :leadIds AND Email != null];
 
-		// Create a set of email domains from the Leads
-
-		// Loop through each Lead
-
-		// Get the email from the Lead
-
-		// Check if the email is not null
-
-		// Add the email domain to the set
-
-		// Query the Accounts
-		return null; // Replace null with the variable you used to store the result
+		Set<String> emailDomains = new Set<String>();
+    for (Lead lead : leads) {
+        if (lead.Email != null && lead.Email.contains('@')) {
+            String[] parts = lead.Email.split('@');
+        }
+    }
+		List<Account> accounts = new List<Account>();
+    if (!emailDomains.isEmpty()) {
+        accounts = [
+            SELECT Id, Name, Website
+            FROM Account
+            WHERE Website != null
+        ];
+		return accounts; // Replace null with the variable you used to store the result
 	}
-
+	}
 	/**
 	 * Question 23
 	 * Clones and Inserts Opportunity Line Items from an original Opportunity to a list of cloned Opportunities.

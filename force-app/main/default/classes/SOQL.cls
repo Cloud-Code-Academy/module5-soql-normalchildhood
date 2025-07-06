@@ -318,18 +318,18 @@ public with sharing class SOQL {
 	 */
 	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
 		// Query the original Opportunity Line Items
-
+		List<OpportunityLineItem> lineItemList = [SELECT Id, Name, (SELECT Id, Name FROM OpportunityLineItem) FROM Opportunity WHERE Id = :origOppId];
 		// Create a list to hold the new line items
-
+		List<OpportunityLineItem> oppLineItems = new List<OpportunityLineItem>();
 		// Generate a random number between 1 and 3
-
+		Integer randomNum = Math.floor(Math.random() * 3).intValue() + 1;
 		// Loop through each cloned Opportunity Id
-
-		// Loop through each original line item
-
-		// Clone the original line item and add the random number to the quantity
-
-		// Insert the new line items
+		for (Opportunity opp : cloneOppIds) { // Loop through each original line item
+			opp.clone(false,false, false, false); // Clone the original line item and add the random number to the quantity
+			opp.Quantity = randomNum;
+			oppLineItems.add(opp);
+		}
+		insert oppLineItems; // Insert the new line items
 	}
 
 	/**

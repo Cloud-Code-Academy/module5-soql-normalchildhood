@@ -182,7 +182,7 @@ public with sharing class SOQL {
 	 */
 	public static List<Account> getFirstTenAccounts() {
 		return [SELECT Id, Name FROM Account ORDER BY Name ASC LIMIT 10]; 
-
+	}
 	/**
 	 * Question 14
 	 * Retrieves the Opportunities with an Amount greater than 100,000, ordered by CloseDate, and limited to 5 records.

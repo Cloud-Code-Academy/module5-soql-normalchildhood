@@ -39,7 +39,8 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetContactsByFirstName method to cover this method
 	 */
 	public static List<Contact> getContactsByFirstName () {
-	return [SELECT Id, FirstName, LastName FROM Contact WHERE FirstName = 'John'];
+		system.debug([SELECT Id, Name, FirstName, LastName FROM Contact WHERE FirstName = 'John']);
+	return [SELECT Id, Name, FirstName, LastName FROM Contact WHERE FirstName = 'John'];
 	}
 
 	/**
@@ -163,8 +164,12 @@ public with sharing class SOQL {
 	 * @return The total revenue.
 	 */
 	public static Decimal getTotalRevenueByStage(String stage) {
-		Decimal sumOfOpps = [SELECT SUM (Amount) FROM Opportunity WHERE StageName = :stage OR Amount > 10000];
-		return sumOfOpps; // Replace null with the variable you used to store the result
+		List<Opportunity> oppsToSum = [SELECT Amount FROM Opportunity WHERE StageName = :stage OR Amount > 10000];
+		Decimal sum = null;
+		for (Opportunity opp : oppsToSum) {
+			sum =+ opp.amount;
+		}
+		return sum; // Replace null with the variable you used to store the result
 	}
 
 	/**
@@ -215,12 +220,12 @@ public with sharing class SOQL {
 	 * @return A set of Case Ids.
 	 */
 	public static Set<Id> getCaseIdsByAccount(Id accountId) {
+		List<Case> caseIdList = [SELECT Id, AccountId FROM Case WHERE AccountId = :accountId];
 		Set<Id> caseIdSet = new Set<Id> ();
-		Case caseQuery = [SELECT Id, AccountId FROM Case WHERE AccountId = :accountId];
-		for (Id caseId : caseQuery) {
-		caseIdSet.add(case.Id);
+		for (Case indivCase : caseIdList) {
+			caseIdSet.add(indivCase.Id);
 		}
-		return caseIdSet; // Replace null with the variable you used to store the result
+		return caseIdSet; 
 	}
 
 	/**
@@ -232,10 +237,9 @@ public with sharing class SOQL {
 	 */
 	public static Map<Id, String> getAccountIdsToNamesNotInCountry(String country) {
 		Map<Id, String> accountIdsToNames = new Map<Id, String>();
-		Account acctQuery = [SELECT Id, Name, BillingCountry FROM Account WHERE BillingCountry != :country];
-		// Loop through each Account and add the Id and Name to the map
-		for (Id acc : acctQuery){
-			accountIdsToNames.put(acc.Id, acc.Name);
+		List<Account> acctQuery = [SELECT Id, Name, BillingCountry FROM Account WHERE BillingCountry != :country]; //Do I need to make this a list or should I have just put Account?
+		for (Account acct : acctQuery){
+			accountIdsToNames.put(acct.Id, acct.Name);
 		}
 		return accountIdsToNames; // Replace null with the variable you used to store the result
 	}
@@ -293,20 +297,23 @@ public with sharing class SOQL {
 		List<Lead> leads = [SELECT Email FROM Lead WHERE Id IN :leadIds AND Email != null];
 
 		Set<String> emailDomains = new Set<String>();
+        
     for (Lead lead : leads) {
         if (lead.Email != null && lead.Email.contains('@')) {
-            String[] parts = lead.Email.split('@');
+            String domain = lead.Email.split('@')[1];
+            emailDomains.add(domain);
         }
+     
     }
 		List<Account> accountsList = new List<Account>();
     if (!emailDomains.isEmpty()) {
-        accounts = [
+        accountsList = [
             SELECT Id, Name, Website
             FROM Account
-            WHERE Website != null
+            WHERE Website IN :emailDomains
         ];
+    }
 		return accountsList; // Replace null with the variable you used to store the result
-	}
 	}
 	/**
 	 * Question 23
@@ -316,21 +323,29 @@ public with sharing class SOQL {
 	 * @param Original Opportunity Id
 	 * @param List of cloned Opportunity Ids
 	 */
-	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
+	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) { //cloneOppIds is a list of opp ids but I need the whole opps
 		// Query the original Opportunity Line Items
-		List<OpportunityLineItem> lineItemList = [SELECT Id, Name, (SELECT Id, Name FROM OpportunityLineItem__r) FROM Opportunity WHERE Id = :origOppId];
-		// Create a list to hold the new line items
-		List<OpportunityLineItem> oppLineItems = new List<OpportunityLineItem>();
+		List<OpportunityLineItem> originalLineItems = [SELECT Product2Id, PricebookEntryId FROM OpportunityLineItem WHERE OpportunityId = :origOppId];
+		List<OpportunityLineItem> lineItemsToInsert = new List<OpportunityLineItem>();
 		// Generate a random number between 1 and 3
-		Integer randomNum = Math.floor(Math.random() * 3).intValue() + 1;
+		Integer randomQty = Math.mod(Crypto.getRandomInteger(), 3) + 1;
 		// Loop through each cloned Opportunity Id
-		for (OpportunityLineItem oppLI : cloneOppIds) { // Loop through each original line item
-			oppLI.clone(false,false, false, false); // Clone the original line item and add the random number to the quantity
-			oppLI.Quantity = randomNum;
-			oppLineItems.add(oppLI);
-		}
-		insert oppLineItems; // Insert the new line items
-	}
+        for (Id cloneOppId : cloneOppIds) {
+        for (OpportunityLineItem original : originalLineItems) {
+            OpportunityLineItem newLineItem = new OpportunityLineItem();
+            newLineItem.OpportunityId = cloneOppId;
+            newLineItem.Product2Id = original.Product2Id;
+            newLineItem.PricebookEntryId = original.PricebookEntryId;
+            newLineItem.Quantity = randomQty;
+
+            lineItemsToInsert.add(newLineItem);
+        }
+    }
+
+    if (!lineItemsToInsert.isEmpty()) {
+        insert lineItemsToInsert;
+    }
+}
 
 	/**
 	 * Question 24
@@ -347,28 +362,29 @@ public with sharing class SOQL {
 	 * Example: if there are two Contacts on the Account, "Billy" and "Abby," the 'Primary_Contact__c' will be set to "Abby."
 	 */
 	public static void setPrimaryContact() {
-		//Use the getOpportunityDetailsForClosedWon() method to get the Opportunities
-		List<Opportunity> oppsList = getOpportunityDetailsForClosedWon();
-		List<Account> acctsRelatedToOpps = new List<Account>();
-		// Create a set of Account Ids from the Opportunities
-		for (Opportunity opp : oppsList) {
-			acctsRelatedToOpps.add(opp.AccountId);
-		}
-		// Query the Contacts
-		List<Contact> relatedCont = [SELECT Id, AccountId, FirstName FROM Contact WHERE AccountId IN :acctsRelatedToOpps ORDER BY FirstName ASC LIMIT 1];
-		// Loop through each Contact and add the Account Id and Contact to the map
-		Map<ID, ID> accountIdToContactName = new Map<ID, ID> ();
-		for (Contact contact : relatedCont) {
-			accountIdToContactName.put(contact.AccountId, contact.Id);
-		}
-		// Loop through each Opportunity
-		Id contactId = null;
-		for (Opportunity oppUpdate : oppsList) {
-		contactId = accountIdToContactName.get(oppUpdate.AccountId);
-			oppUpdate.Primary_Contact__r = contactId;
-		}
-		// Update the Opportunity primary contact from accountToContactMap
-		update oppsList;
-		// Update the Opportunities
-	}
+    List<Opportunity> oppsList = getOpportunityDetailsForClosedWon();
+
+    Set<Id> accountIds = new Set<Id>();
+    for (Opportunity opp : oppsList) {
+        if (opp.AccountId != null) {
+            accountIds.add(opp.AccountId);
+        }
+    }
+	List<Contact> contacts = [SELECT Id, AccountId, FirstName FROM Contact WHERE AccountId IN :accountIds ORDER BY AccountId, FirstName ASC];
+
+    Map<Id, Contact> accountToPrimaryContact = new Map<Id, Contact>();
+    for (Contact cont : contacts) {
+        if (!accountToPrimaryContact.containsKey(cont.AccountId)) {
+            accountToPrimaryContact.put(cont.AccountId, cont);
+        }
+    }
+	for (Opportunity opp : oppsList) {
+        if (accountToPrimaryContact.containsKey(opp.AccountId)) {
+            opp.Primary_Contact__c = accountToPrimaryContact.get(opp.AccountId).Id;
+        }
+    }
+
+    update oppsList;
+}
+
 }

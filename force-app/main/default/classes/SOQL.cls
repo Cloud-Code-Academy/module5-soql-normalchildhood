@@ -50,9 +50,14 @@ public with sharing class SOQL {
 	 * @return A list of Contact Ids.
 	 * Update the corresponding test class and testGetContactIdsByLastName method to cover this method
 	 */
-	public static List<Contact> getContactIdsByLastName () {
-	return [SELECT Id, FirstName, LastName FROM Contact WHERE LastName IN ('Smith', 'Jones')];
-	}
+	public static List<Id> getContactIdsByLastName () {
+    List<Id> contactIds = new List<Id>();
+    for (Contact cont : [SELECT Id FROM Contact WHERE LastName IN ('Smith', 'Jones')]) {
+        contactIds.add(cont.Id);
+    }
+    return contactIds;
+}
+
 
 	/**
 	 * Question 4
@@ -75,9 +80,10 @@ public with sharing class SOQL {
 	 * @return The Integer count of Account records.
 	 * Update the corresponding test class and testGetAccountCount method to cover this method
 	 */
-	public static Integer getAccountCount () {
-	return [SELECT count() FROM Account];
-	}
+	public static Integer getAccountCount() {
+	return [SELECT COUNT() FROM Account];
+}
+
 
 	/**
 	 * Question 6
@@ -99,7 +105,7 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetContactsByEmailDomain method to cover this method
 	 */
 	public static List<Contact> getContactsByEmailDomain () {
-	return [SELECT Id, FirstName, LastName FROM Contact WHERE Email LIKE '%@example.com%'];
+	return [SELECT Id, FirstName, LastName, Name, Email FROM Contact WHERE Email LIKE '%@example.com%'];
 	}
 
 	/**
@@ -134,7 +140,9 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetLeadsBySourceOrTitle method to cover this method
 	 */
 	public static List<Lead> getLeadsBySourceOrTitle (String leadSource, String keyword) {
-	return [SELECT Id, LeadSource, Title FROM Lead WHERE LeadSource = :leadSource OR Title = :keyword];
+		String keywordPhrase = '%' + keyword + '%';
+	return [SELECT Id, LeadSource, Title, Company, Phone, LastName, Name, Email FROM Lead WHERE (LeadSource = :leadSource OR Title LIKE :keywordPhrase)
+		AND Email != null AND Phone != null AND Company != null];
 	}
 
 	/**
@@ -165,9 +173,9 @@ public with sharing class SOQL {
 	 */
 	public static Decimal getTotalRevenueByStage(String stage) {
 		List<Opportunity> oppsToSum = [SELECT Amount FROM Opportunity WHERE StageName = :stage OR Amount > 10000];
-		Decimal sum = null;
+		Decimal sum = 0;
 		for (Opportunity opp : oppsToSum) {
-			sum =+ opp.amount;
+			sum += opp.amount;
 		}
 		return sum; // Replace null with the variable you used to store the result
 	}
@@ -276,14 +284,14 @@ public with sharing class SOQL {
 	 * @return List of contacts with the same Mailing State as the Account Billing State
 	 */
 	public static List<Contact> getAccountsWithContactsByState(Id accountId) {
-		// Query the Account
-		Account acctQuery = [SELECT Id, Name, BillingState FROM Account WHERE Id = :accountId];
-		String acctBillingState = acctQuery.BillingState;
-		// Store the Account's BillingState
-		List<Contact> contQuery = [SELECT Id, MailingState FROM Contact WHERE MailingState = :acctBillingState];
-		// Query the Contacts
-		return contQuery; // Replace null with the variable you used to store the result
-	}
+    Account acct = [SELECT Id, BillingState FROM Account WHERE Id = :accountId];
+    String acctBillingState = acct.BillingState;
+
+    List<Contact> contQuery = [SELECT Id, MailingState, MailingCountry FROM Contact WHERE MailingState = :acctBillingState];
+
+    return contQuery;
+}
+
 
 	/**
 	 * Question 22
@@ -294,27 +302,40 @@ public with sharing class SOQL {
 	 * @return A list of Accounts with matching email domains.
 	 */
 	public static List<Account> findAccountsByLeadEmailDomains(Set<Id> leadIds) {
-		List<Lead> leads = [SELECT Email FROM Lead WHERE Id IN :leadIds AND Email != null];
 
-		Set<String> emailDomains = new Set<String>();
-        
+    List<Lead> leads = [SELECT Email FROM Lead WHERE Id IN :leadIds AND Email != null];
+
+    Set<String> emailDomains = new Set<String>();
     for (Lead lead : leads) {
-        if (lead.Email != null && lead.Email.contains('@')) {
-            String domain = lead.Email.split('@')[1];
+        if (lead.Email.contains('@')) {
+            String domain = lead.Email.split('@')[1].toLowerCase().trim();
             emailDomains.add(domain);
         }
-     
     }
-		List<Account> accountsList = new List<Account>();
-    if (!emailDomains.isEmpty()) {
-        accountsList = [
-            SELECT Id, Name, Website
-            FROM Account
-            WHERE Website IN :emailDomains
-        ];
+
+    if (emailDomains.isEmpty()) return new List<Account>();
+
+    List<Account> accounts = [SELECT Id, Name, Website FROM Account WHERE Website != null];
+    List<Account> matchedAccounts = new List<Account>();
+
+    for (Account acct : accounts) { //this was super annoying to clean up possible website URL variations
+        String cleanedWebsite = acct.Website.toLowerCase()
+            .replace('http://', '')
+            .replace('https://', '')
+            .replace('www.', '')
+            .trim();
+
+        if (cleanedWebsite.endsWith('/')) {
+            cleanedWebsite = cleanedWebsite.substring(0, cleanedWebsite.length() - 1);
+        }
+        if (emailDomains.contains(cleanedWebsite)) {
+            matchedAccounts.add(acct);
+        }
     }
-		return accountsList; // Replace null with the variable you used to store the result
-	}
+
+    return matchedAccounts;
+}
+
 	/**
 	 * Question 23
 	 * Clones and Inserts Opportunity Line Items from an original Opportunity to a list of cloned Opportunities.
@@ -325,7 +346,7 @@ public with sharing class SOQL {
 	 */
 	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) { //cloneOppIds is a list of opp ids but I need the whole opps
 		// Query the original Opportunity Line Items
-		List<OpportunityLineItem> originalLineItems = [SELECT Product2Id, PricebookEntryId FROM OpportunityLineItem WHERE OpportunityId = :origOppId];
+		List<OpportunityLineItem> originalLineItems = [SELECT Product2Id, PricebookEntryId, UnitPrice FROM OpportunityLineItem WHERE OpportunityId = :origOppId];
 		List<OpportunityLineItem> lineItemsToInsert = new List<OpportunityLineItem>();
 		// Generate a random number between 1 and 3
 		Integer randomQty = Math.mod(Crypto.getRandomInteger(), 3) + 1;
@@ -337,6 +358,7 @@ public with sharing class SOQL {
             newLineItem.Product2Id = original.Product2Id;
             newLineItem.PricebookEntryId = original.PricebookEntryId;
             newLineItem.Quantity = randomQty;
+			newLineItem.UnitPrice = original.UnitPrice;
 
             lineItemsToInsert.add(newLineItem);
         }

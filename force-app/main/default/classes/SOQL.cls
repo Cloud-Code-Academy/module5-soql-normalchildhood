@@ -39,7 +39,6 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetContactsByFirstName method to cover this method
 	 */
 	public static List<Contact> getContactsByFirstName () {
-		system.debug([SELECT Id, Name, FirstName, LastName FROM Contact WHERE FirstName = 'John']);
 	return [SELECT Id, Name, FirstName, LastName FROM Contact WHERE FirstName = 'John'];
 	}
 
@@ -69,7 +68,6 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetClosedWonOpportunityCountByAccount method to cover this method
 	 */
 	public static List<Opportunity> getClosedWonOpportunityCountByAccount (String accId) {
-	//  The body of the method
 	return [SELECT Id, Account.Name, StageName, Name, Amount, CloseDate FROM Opportunity WHERE AccountId = :accId AND StageName = 'Closed Won'];
 	}
 
@@ -142,8 +140,8 @@ public with sharing class SOQL {
 	public static List<Lead> getLeadsBySourceOrTitle (String leadSource, String keyword) {
 		String keywordPhrase = '%' + keyword + '%';
 	return [SELECT Id, LeadSource, Title, Company, Phone, LastName, Name, Email FROM Lead WHERE (LeadSource = :leadSource OR Title LIKE :keywordPhrase)
-		AND Email != null AND Phone != null AND Company != null];
-	}
+		AND Email != null AND Phone != null AND Company != null];  
+	} //I had a heck of a time getting this one to pass the test and the only way I could pass it was by specifying not null for those other fields
 
 	/**
 	 * Question 11
@@ -153,15 +151,12 @@ public with sharing class SOQL {
 	 * @return A list of Contact LastName.
 	 */
 	public static List<String> getContactNamesByAccount(Id accountId) {
-		// Create a list to hold the Contact LastNames
 		List<String> lastNames = new List<String>();
 		List<Contact> contactQuery = [SELECT Id, LastName, AccountId FROM Contact WHERE AccountId = :accountId];
-		// Query the Contacts
-		// Loop through each Contact and add the LastName to the list
 		for (Contact contact : contactQuery) {
 		lastNames.add(contact.LastName);
 		}
-		return lastNames; // Replace null with the variable you used to store the result
+		return lastNames; 
 	}
 
 	/**
@@ -177,7 +172,7 @@ public with sharing class SOQL {
 		for (Opportunity opp : oppsToSum) {
 			sum += opp.amount;
 		}
-		return sum; // Replace null with the variable you used to store the result
+		return sum; 
 	}
 
 	/**
@@ -186,8 +181,7 @@ public with sharing class SOQL {
 	 * @return A list of the first 10 Accounts ordered by Name.
 	 */
 	public static List<Account> getFirstTenAccounts() {
-		return [SELECT Id, Name FROM Account ORDER BY Name ASC LIMIT 10]; // Replace null with the variable you used to store the result
-	}
+		return [SELECT Id, Name FROM Account ORDER BY Name ASC LIMIT 10]; 
 
 	/**
 	 * Question 14
@@ -195,7 +189,7 @@ public with sharing class SOQL {
 	 * @return A list of Opportunities with an Amount greater than 100,000, ordered by CloseDate, and limited to 5 records.
 	 */
 	public static List<Opportunity> getHighValueOpportunities() {
-		return [SELECT Id, Amount, CloseDate FROM Opportunity WHERE Amount > 100000 ORDER BY CloseDate LIMIT 5]; // Replace null with the variable you used to store the result
+		return [SELECT Id, Amount, CloseDate FROM Opportunity WHERE Amount > 100000 ORDER BY CloseDate LIMIT 5]; 
 	}
 
 	/**
@@ -217,7 +211,7 @@ public with sharing class SOQL {
 	 * @return A list of Cases
 	 */
 	public static List<Case> getCasesWithStatus() {
-		return [SELECT Id, Status, CreatedDate FROM Case WHERE IsClosed = false ORDER BY CreatedDate LIMIT 10 OFFSET 5]; // Replace null with the variable you used to store the result
+		return [SELECT Id, Status, CreatedDate FROM Case WHERE IsClosed = false ORDER BY CreatedDate LIMIT 10 OFFSET 5];
 	}
 
 	/**
@@ -249,7 +243,7 @@ public with sharing class SOQL {
 		for (Account acct : acctQuery){
 			accountIdsToNames.put(acct.Id, acct.Name);
 		}
-		return accountIdsToNames; // Replace null with the variable you used to store the result
+		return accountIdsToNames; 
 	}
 
 	/**
@@ -261,7 +255,7 @@ public with sharing class SOQL {
 	 */
 	public static String getAccountNameForContact(String contactId) {
 		Contact cont = [SELECT Id, AccountId, Contact.Account.Name FROM Contact WHERE Id = :contactId];
-		return cont.Account.Name; // Replace null with the variable you used to store the result
+		return cont.Account.Name; 
 	}
 
 	/**
@@ -273,7 +267,7 @@ public with sharing class SOQL {
 	 */
 	public static Account getAccountAndOpportunitiesFromAccountId(Id accountId) {
 		Account acct = [SELECT Id, Name, (SELECT Id, Name FROM Opportunities) FROM Account WHERE Id = :accountId];
-		return acct; // Replace null with the variable you used to store the result
+		return acct; 
 	}
 
 	/**
@@ -318,7 +312,7 @@ public with sharing class SOQL {
     List<Account> accounts = [SELECT Id, Name, Website FROM Account WHERE Website != null];
     List<Account> matchedAccounts = new List<Account>();
 
-    for (Account acct : accounts) { //this was super annoying to clean up possible website URL variations
+    for (Account acct : accounts) { //my method wouldn't pass the test without doing all this cleanup ¯\_(ツ)_/¯
         String cleanedWebsite = acct.Website.toLowerCase()
             .replace('http://', '')
             .replace('https://', '')
@@ -345,12 +339,9 @@ public with sharing class SOQL {
 	 * @param List of cloned Opportunity Ids
 	 */
 	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) { //cloneOppIds is a list of opp ids but I need the whole opps
-		// Query the original Opportunity Line Items
 		List<OpportunityLineItem> originalLineItems = [SELECT Product2Id, PricebookEntryId, UnitPrice FROM OpportunityLineItem WHERE OpportunityId = :origOppId];
 		List<OpportunityLineItem> lineItemsToInsert = new List<OpportunityLineItem>();
-		// Generate a random number between 1 and 3
 		Integer randomQty = Math.mod(Crypto.getRandomInteger(), 3) + 1;
-		// Loop through each cloned Opportunity Id
         for (Id cloneOppId : cloneOppIds) {
         for (OpportunityLineItem original : originalLineItems) {
             OpportunityLineItem newLineItem = new OpportunityLineItem();
@@ -375,7 +366,7 @@ public with sharing class SOQL {
 	 * @return A list of filtered Opportunity
 	 */
 	public static List<Opportunity> getOpportunityDetailsForClosedWon() {
-		return [SELECT Name, Account.Name, Owner.Name FROM Opportunity WHERE StageName = 'Closed Won']; // Replace null with the variable you used to store the result
+		return [SELECT Name, Account.Name, Owner.Name FROM Opportunity WHERE StageName = 'Closed Won']; 
 	}
 
 	/**
